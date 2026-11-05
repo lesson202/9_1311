@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Фейки та їх розпізнавання</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#E8E4DB; --card:#FFFFFF; --ink:#1B2330; --muted:#5E6675; --line:#D9D3C6; --soft:#F3F0E8;
+  --accent:#1D3F8F; --accent-ink:#FFFFFF; --stamp:#B3261E; --mark:#FFE58A; --mark-ink:#1B2330;
+  --ok:#1E7A45; --ok-bg:#E3F4EA; --bad:#B42318; --bad-bg:#FDECEA;
+  --paper:#FFFFFF; --paper-ink:#1B1B1B; --paper-line:#CFC8B8; --paper-soft:#F1EEE6;
+  --font:"Onest","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:"PT Serif",Georgia,"Times New Roman",serif;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --desk:#14171C; --card:#1C2027; --ink:#E8EBF0; --muted:#9AA3B2; --line:#2C323D; --soft:#232832;
+    --accent:#8FB0FF; --accent-ink:#0D1424; --stamp:#F0786F; --mark:#4B4420; --mark-ink:#F3EBC0;
+    --ok:#5BC489; --ok-bg:#153222; --bad:#F08A80; --bad-bg:#3A1B19; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --desk:#14171C; --card:#1C2027; --ink:#E8EBF0; --muted:#9AA3B2; --line:#2C323D; --soft:#232832;
+  --accent:#8FB0FF; --accent-ink:#0D1424; --stamp:#F0786F; --mark:#4B4420; --mark-ink:#F3EBC0;
+  --ok:#5BC489; --ok-bg:#153222; --bad:#F08A80; --bad-bg:#3A1B19; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+body{margin:0;background:var(--desk);color:var(--ink);font:400 16px/1.6 var(--font);-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--card)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+.scroll{overflow-x:auto}
+
+/* ---------- header ---------- */
+.top{padding:26px 0 22px}
+.top-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:center}
+@media (max-width:860px){.top-grid{grid-template-columns:1fr}}
+.stamp-eyebrow{display:inline-block;border:2px solid var(--stamp);color:var(--stamp);padding:3px 12px;border-radius:4px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:13px;transform:rotate(-2deg);margin-bottom:14px}
+.top h1{margin:0 0 10px;font-size:clamp(40px,6.4vw,72px);line-height:1;font-weight:700;letter-spacing:-.025em}
+.top .sub{margin:0 0 18px;font-size:19px;color:var(--muted);max-width:36ch}
+.who{max-width:360px}
+.who label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+.who input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.saved-note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.storewarn{display:none;background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad);border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:15px}
+.storewarn.on{display:block}
+.illus{width:100%;max-width:470px;justify-self:center}
+.illus svg{width:100%;height:auto;display:block}
+.il-card{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+.il-bar{fill:var(--line)}
+.il-acc{fill:var(--accent)}
+.il-field{fill:none;stroke:var(--line);stroke-width:2}
+.il-paper{fill:#fff;stroke:#cfc8b8;stroke-width:1.5}
+.il-pbar{fill:#d5d8de}
+.il-pdark{fill:#2a2f38}
+.il-pgrp{fill:#efeadf}
+.il-stamp{fill:none;stroke:var(--stamp);stroke-width:3}
+.il-stamptxt{fill:var(--stamp);font:700 14px var(--font);letter-spacing:.08em}
+
+/* ---------- tabs ---------- */
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs .wrap::-webkit-scrollbar{display:none}
+nav.tabs a{padding:14px 16px;text-decoration:none;color:var(--muted);font-weight:600;white-space:nowrap;border-bottom:3px solid transparent}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+main{padding:28px 0 70px}
+section.view{display:none}
+section.view.on{display:block}
+
+/* ---------- prose ---------- */
+.prose{max-width:76ch}
+.prose h2{font-size:26px;line-height:1.2;margin:38px 0 10px}
+.prose h2:first-child{margin-top:0}
+.prose h3{font-size:19px;margin:24px 0 6px}
+.prose p,.prose li{margin:0 0 10px}
+.lead{font-size:18px;color:var(--muted)}
+table.plain{border-collapse:collapse;width:100%;margin:8px 0 18px;font-size:15px;background:var(--card)}
+table.plain th,table.plain td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+table.plain th{background:var(--soft);font-weight:600}
+.callout{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:6px;padding:12px 16px;margin:8px 0 18px}
+.route{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0 8px;counter-reset:r}
+@media (max-width:900px){.route{grid-template-columns:1fr 1fr}}
+.route a{counter-increment:r;position:relative;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:34px 12px 12px;text-decoration:none;color:var(--ink);font-weight:600;font-size:15px;line-height:1.35}
+.route a::before{content:counter(r);position:absolute;left:12px;top:8px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:13px;display:flex;align-items:center;justify-content:center}
+.route a small{display:block;font-weight:400;color:var(--muted);margin-top:2px}
+.schema{width:100%;max-width:720px;height:auto;display:block;margin:6px 0 18px}
+
+/* ---------- builder layout ---------- */
+.builder{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:980px){.builder{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px}
+.pad{padding:16px}
+.panel h2{font-size:17px;margin:0 0 8px}
+.ws{display:flex;flex-direction:column;gap:18px;min-width:0}
+.tasks{padding:16px;position:relative}
+.tnums{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tnums button{min-width:38px;height:38px;padding:0 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:700;cursor:pointer}
+.tnums button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.tnums button.done{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.tnums button.bonus{border-style:dashed}
+.task h3{margin:0 0 4px;font-size:18px;line-height:1.3;padding-right:4px}
+.task .meta{font-size:13px;color:var(--muted);margin:0 0 8px}
+.task p{margin:0 0 12px}
+.counter{font-weight:600;background:var(--soft);border-radius:6px;padding:7px 10px;margin:0 0 12px;font-size:15px}
+details.hint summary{cursor:pointer;color:var(--accent);font-weight:600;margin-bottom:6px}
+details.hint p{font-size:15px;background:var(--soft);padding:10px 12px;border-radius:8px}
+.stamp-row{margin:0 0 10px}
+.stamp-done{display:inline-block;border:3px double var(--stamp);color:var(--stamp);padding:2px 12px;border-radius:4px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px;transform:rotate(-3deg);opacity:.92}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600;text-decoration:none;color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:6px 11px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.feedback{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:15px;display:none}
+.feedback.ok{display:block;background:var(--ok-bg);color:var(--ok)}
+.feedback.bad{display:block;background:var(--bad-bg);color:var(--bad)}
+.howto{padding:12px 16px}
+.howto summary{cursor:pointer;font-weight:600}
+.howto ol{margin:10px 0 0;padding-left:0;list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;counter-reset:h}
+@media (max-width:900px){.howto ol{grid-template-columns:1fr 1fr}}
+.howto li{counter-increment:h;position:relative;background:var(--soft);border-radius:8px;padding:30px 10px 10px;font-size:14px;line-height:1.4}
+.howto li::before{content:counter(h);position:absolute;left:10px;top:6px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600}
+.chip[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--soft)}
+.note{font-size:14px;color:var(--muted);margin:10px 0 0}
+.empty{color:var(--muted);padding:6px 0}
+
+
+/* ---------- lesson 19 additions ---------- */
+.stepno{font-size:14px;font-weight:600;color:var(--muted);margin:0 0 6px}
+.route.r4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:900px){.route.r4{grid-template-columns:1fr 1fr}}
+.il-mark{fill:var(--mark)}
+.il-lens{fill:none;stroke:var(--accent);stroke-width:9}
+.il-handle{stroke:var(--accent);stroke-width:14;stroke-linecap:round}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0 18px}
+@media (max-width:760px){.modes{grid-template-columns:1fr}}
+.mode{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 18px 8px}
+.mode.free{border-top:5px solid var(--ok)}
+.mode.once{border-top:5px solid var(--stamp)}
+.mode h3{margin:0 0 6px;font-size:19px}
+.mode p{margin:0 0 10px}
+.next{margin:22px 0 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn.retry{margin-top:12px}
+.panel h3{margin:0}
+.pad h3{margin:0 0 6px}
+.sign-n{display:inline-block;min-width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:700;text-align:center;line-height:22px;margin-right:8px}
+ol.five{margin:8px 0 14px;padding-left:0;list-style:none;counter-reset:q;display:grid;gap:8px}
+ol.five li{counter-increment:q;position:relative;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px 10px 48px;margin:0}
+ol.five li::before{content:counter(q);position:absolute;left:12px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--stamp);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+.stagecol{display:flex;flex-direction:column;gap:18px;min-width:0}
+/* message mock-ups */
+.msg{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.msg-top{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--soft)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);flex:0 0 auto}
+.msg-from{font-weight:700;line-height:1.2}
+.msg-meta{font-size:13px;color:var(--muted)}
+.msg-body{padding:12px 14px}
+.msg-title{font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.25;margin:0 0 6px}
+.msg-text{margin:0;white-space:pre-line}
+.bubble{background:var(--soft);border-radius:14px 14px 14px 4px;padding:10px 13px;display:inline-block;max-width:100%}
+.msg-link{display:block;margin-top:8px;color:var(--accent);text-decoration:underline;word-break:break-all}
+.msg-note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.msg.alert{border-left:6px solid var(--stamp)}
+.msg-img{margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.msg-img svg{display:block;width:100%;height:auto}
+.msg-comments{border-top:1px solid var(--line);padding:9px 14px;background:var(--soft);font-size:14px}
+.msg-comments p{margin:0 0 4px}
+.msg-comments p:last-child{margin:0}
+.ctl{padding:14px 16px;border-top:1px solid var(--line)}
+.ctl .lab{font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+.ctl .chips{margin-bottom:14px}
+.verd{display:flex;gap:8px;flex-wrap:wrap}
+.verd button,.chk button{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600}
+.verd button[aria-pressed="true"],.chk button[aria-pressed="true"]{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.mfb{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:15px}
+.mfb.ok{background:var(--ok-bg);color:var(--ok)}
+.mfb.bad{background:var(--bad-bg);color:var(--bad)}
+.mfb ul{margin:4px 0 0;padding-left:18px}
+.chk{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.facts{margin:0 0 14px;padding:0;list-style:none;display:grid;gap:8px}
+.facts li{background:var(--soft);border-radius:8px;padding:9px 12px;font-size:15px}
+.facts b{display:block;font-size:13px;color:var(--muted);margin-bottom:2px}
+.sbx textarea,.rulebox textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--card);resize:vertical;min-height:90px}
+.risk{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--soft);font-weight:600}
+.memo{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--stamp);border-radius:10px;padding:14px 18px;max-width:640px}
+.memo h3{margin:0 0 6px}
+.memo ol{margin:6px 0 0;padding-left:22px}
+.memo li{margin:0 0 4px}
+ul.weak{margin:6px 0 0;padding-left:20px}
+ul.rules{margin:0 0 16px;padding-left:20px}
+ul.rules li{margin:0 0 7px}
+.tprog{font-weight:600;color:var(--muted);margin:0 0 8px}
+.progress{height:8px;background:var(--soft);border-radius:999px;overflow:hidden;margin:0 0 16px}
+.progress i{display:block;height:100%;background:var(--accent)}
+.tq{font-size:20px;font-weight:600;line-height:1.35;margin:0 0 16px;max-width:62ch}
+.topts{display:flex;flex-direction:column;gap:8px;margin:0 0 16px}
+.topts button{text-align:left;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer;font-size:16px;line-height:1.4}
+.topts button[aria-pressed="true"]{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.tact{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.testwarn{border-left:5px solid var(--bad)}
+.tdone .big{font-size:32px;font-weight:700;margin:4px 0 6px}
+.tdone .row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+#testbox{max-width:760px}
+.report{max-width:800px}
+.report .big{font-size:26px;font-weight:700;margin:6px 0 14px}
+.report .row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.report .st{font-weight:600}
+.report .st.ok{color:var(--ok)}
+.report h3{margin:22px 0 6px;font-size:18px}
+@media print{body *{visibility:hidden}#memoPrint,#memoPrint *{visibility:visible}#memoPrint{position:absolute;left:0;top:0}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-grid">
+    <div>
+      <div class="storewarn" id="storewarn" role="alert">Браузер не дозволяє зберігати прогрес (можливо, увімкнено приватний режим). Тест у такому режимі недоступний: відкрий сторінку у звичайному вікні браузера.</div>
+      <span class="stamp-eyebrow">Проєкт 4. Кіберзахист</span>
+      <h1>Фейки та їх розпізнавання</h1>
+      <p class="sub">Навчись помічати підозрілі повідомлення раніше, ніж поділишся ними.</p>
+      <div class="who">
+        <label for="who">Твоє прізвище та ім’я (обов’язково для тесту)</label>
+        <input id="who" type="text" autocomplete="off" placeholder="Наприклад, Ковальчук Марія">
+        <p class="saved-note">Практична частина зберігається автоматично. Тест можна пройти лише один раз.</p>
+      </div>
+    </div>
+    <div class="illus" aria-hidden="true">
+      <svg viewBox="0 0 470 280">
+        <g transform="rotate(-3 170 140)">
+          <rect class="il-card" x="14" y="30" width="300" height="200" rx="14"/>
+          <circle class="il-bar" cx="48" cy="64" r="15"/>
+          <rect class="il-bar" x="74" y="53" width="112" height="9" rx="4"/>
+          <rect class="il-bar" x="74" y="69" width="66" height="7" rx="3"/>
+          <rect class="il-mark" x="30" y="94" width="230" height="17" rx="3"/>
+          <rect class="il-pdark" x="34" y="99" width="190" height="7" rx="3" style="fill:var(--ink)"/>
+          <rect class="il-bar" x="34" y="124" width="250" height="7" rx="3"/>
+          <rect class="il-mark" x="30" y="140" width="150" height="17" rx="3"/>
+          <rect class="il-pdark" x="34" y="145" width="120" height="7" rx="3" style="fill:var(--ink)"/>
+          <rect class="il-bar" x="34" y="170" width="200" height="7" rx="3"/>
+          <rect class="il-field" x="30" y="190" width="104" height="28" rx="7"/>
+          <rect class="il-bar" x="44" y="201" width="76" height="7" rx="3"/>
+        </g>
+        <g>
+          <circle class="il-lens" cx="318" cy="150" r="62"/>
+          <line class="il-handle" x1="364" y1="196" x2="428" y2="256"/>
+          <path d="M295 148 l18 18 l34 -38" fill="none" stroke="var(--ok)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <g transform="rotate(-9 380 56)"><rect class="il-stamp" x="304" y="34" width="150" height="40" rx="6"/><text class="il-stamptxt" x="379" y="60" text-anchor="middle">ПЕРЕВІР</text></g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Розділи">
+  <div class="wrap">
+    <a href="#theory" data-view="theory">Теорія</a>
+    <a href="#lab" data-view="lab">Детектор</a>
+    <a href="#test" data-view="test">Тест (1 спроба)</a>
+    <a href="#result" data-view="result">Мій результат</a>
+  </div>
+</nav>
+
+<main><div class="wrap">
+
+<!-- ===================== THEORY ===================== -->
+<section class="view" id="v-theory"><div class="prose">
+  <p class="stepno">Крок 1 з 4: теорія</p>
+  <h2>Як проходити урок</h2>
+  <div class="route r4">
+    <a href="#theory">Теорія<small>прочитай цю сторінку</small></a>
+    <a href="#lab">Детектор<small>2 завдання й додаткове, спроб скільки завгодно</small></a>
+    <a href="#test">Тест<small>12 запитань, одна спроба</small></a>
+    <a href="#result">Результат<small>знімок екрана вчителю</small></a>
+  </div>
+  <div class="modes">
+    <div class="mode free">
+      <h3>Детектор: пробуй скільки завгодно</h3>
+      <p>Кнопку «Перевірити завдання» можна натискати без обмежень. Система скаже, у чому помилка. Пояснення до повідомлення з’являється, коли ти відповів(-ла) правильно.</p>
+      <p>Є й «Пісочниця»: принеси власний приклад.</p>
+    </div>
+    <div class="mode once">
+      <h3>Тест: лише одна спроба</h3>
+      <p>На кожне запитання відповідаєш один раз, змінити відповідь не можна. Другого проходження немає.</p>
+      <p>Тому спершу прочитай теорію й попрацюй у «Детекторі». Починай тест, коли будеш готовий(-а).</p>
+    </div>
+  </div>
+
+  <h2>Навіщо фахівцеві з кіберзахисту знати про фейки</h2>
+  <p>Фейки — це не лише «неправдиві новини». Через підроблені повідомлення шахраї викрадають паролі та гроші, а маніпулятори керують думками й емоціями людей. Фахівець із кіберзахисту вчиться помічати такі повідомлення раніше, ніж вони завдадуть шкоди. Сьогодні ти спробуєш себе в цій ролі.</p>
+
+  <h2>Що таке фейк</h2>
+  <div class="callout"><b>Фейк</b> — це неправдива або викривлена інформація, яку видають за правдиву.</div>
+  <div class="scroll"><table class="plain">
+    <tr><th>Поняття</th><th>Що означає</th><th>Приклад</th></tr>
+    <tr><td><b>Дезінформація</b></td><td>неправда, яку поширюють навмисно, щоб ввести в оману або отримати вигоду</td><td>підроблене повідомлення «школи закриють», яке пишуть, щоб посіяти паніку</td></tr>
+    <tr><td><b>Хибна інформація</b></td><td>неправда, яку людина поширює помилково, не знаючи, що вона неправдива</td><td>ти пересилаєш друзям чужий допис і не підозрюєш, що він вигаданий</td></tr>
+  </table></div>
+  <p>Тому навіть чесна людина може стати частиною поширення фейку. Саме тому перевіряти треба до репосту, а не після.</p>
+
+  <h2>Види фейків</h2>
+  <div class="scroll"><table class="plain">
+    <tr><th>Вид</th><th>Що це</th><th>Приклад</th></tr>
+    <tr><td><b>Вигадана новина</b></td><td>подія, якої не було, подана як справжня</td><td>«З понеділка всі школи міста закриють на місяць»</td></tr>
+    <tr><td><b>Зображення й відео поза контекстом</b></td><td>справжнє фото чи відео з іншим підписом: інше місце або інший час</td><td>фото повені 2019 року під підписом «сьогодні в нашому місті»</td></tr>
+    <tr><td><b>Діпфейк і зображення, створені ШІ</b></td><td>відео, аудіо чи фото, створені або змінені програмою так, що людина «говорить» чи «робить» те, чого не було</td><td>відео, де відома людина нібито закликає перевести гроші</td></tr>
+    <tr><td><b>Фішинг і шахрайські повідомлення</b></td><td>повідомлення, що вдають службу, магазин чи друга, щоб отримати паролі, коди чи гроші</td><td>«Ви виграли смартфон! Введіть номер картки»</td></tr>
+    <tr><td><b>Клікбейт</b></td><td>гучний заголовок, що не відповідає тексту, щоб ти натиснув(-ла)</td><td>«ШОК! Лікарі мовчать!» над звичайною порадою</td></tr>
+    <tr><td><b>Псевдонаука й «чудо-поради»</b></td><td>«вчені довели» без назви дослідження, чудодійні ліки, дієти</td><td>«Чай, що підвищує IQ на 20 пунктів»</td></tr>
+    <tr><td><b>Ланцюгові повідомлення</b></td><td>тексти з вимогою «перешли всім», що грають на страху чи надії</td><td>«Перешли 10 друзям — і все буде добре»</td></tr>
+  </table></div>
+  <p>Окремо стоїть <b>сатира</b>: жартівливі новини, які не мають на меті обманути, але їх можуть сприйняти всерйоз, якщо вирвати з контексту.</p>
+
+  <h2>Вісім ознак фейку</h2>
+  <div class="scroll"><table class="plain signs">
+    <tr><th>Ознака</th><th>На що звернути увагу</th></tr>
+    <tr><td><span class="sign-n">1</span><b>Немає джерела, автора чи дати</b></td><td>«мені сказала знайома», «з надійних джерел», «вчені довели» без назви дослідження</td></tr>
+    <tr><td><span class="sign-n">2</span><b>Тиск на емоції</b></td><td>великі літери, «ШОК», «ТЕРМІНОВО», багато знаків оклику. Коли страшно чи обурливо, думати важче</td></tr>
+    <tr><td><span class="sign-n">3</span><b>Вимога негайно поширити</b></td><td>«перешли всім», «поділися, поки не видалили»</td></tr>
+    <tr><td><span class="sign-n">4</span><b>Надто вигідна пропозиція чи «чудо»</b></td><td>виграш без участі, дармові гроші, ліки від усього</td></tr>
+    <tr><td><span class="sign-n">5</span><b>Підозріле посилання чи адреса сайту</b></td><td>адреса схожа на справжню, але має зайві слова чи дивне закінчення; скорочені посилання без пояснень</td></tr>
+    <tr><td><span class="sign-n">6</span><b>Фото чи відео без підтвердження</b></td><td>невідомо, хто, де й коли знімав</td></tr>
+    <tr><td><span class="sign-n">7</span><b>Прохання про пароль, код чи дані картки</b></td><td>справжні сервіси так не роблять: код із SMS не можна передавати нікому</td></tr>
+    <tr><td><span class="sign-n">8</span><b>Заголовок не збігається з текстом</b></td><td>обіцяє сенсацію, а всередині нічого особливого</td></tr>
+  </table></div>
+  <div class="callout">Одна ознака ще не доводить, що повідомлення — фейк. Але чим більше ознак, тим вища ймовірність, що з ним щось не так. І навпаки: <b>не все підозріле — фейк, а справжні повідомлення теж бувають</b>. Мета — перевіряти, а не нікому не вірити.</div>
+
+  <h2>Чому фейки працюють</h2>
+  <ul>
+    <li><b>Емоції.</b> Фейк розрахований на страх, обурення чи радість. Коли ми емоційні, ми швидше ділимося й рідше перевіряємо.</li>
+    <li><b>Швидкість.</b> Репост займає секунду, а перевірка — кілька хвилин.</li>
+    <li><b>Підтвердження власних думок.</b> Ми охочіше віримо тому, що збігається з нашими поглядами.</li>
+    <li><b>«Так кажуть усі».</b> Коли повідомлення бачимо в багатьох чатах, здається, що воно правдиве, хоча його просто переслали.</li>
+  </ul>
+
+  <h2>П’ять запитань перед репостом</h2>
+  <ol class="five">
+    <li><b>Хто це написав?</b> Є автор чи джерело, яке можна назвати?</li>
+    <li><b>Коли й де це сталося?</b> Є дата, місце, деталі?</li>
+    <li><b>Які докази?</b> Є посилання на першоджерело, документ, офіційний сайт?</li>
+    <li><b>Що я відчуваю?</b> Мене лякають, дратують чи спокушають, щоб я не думав(-ла)?</li>
+    <li><b>Хто ще про це пише?</b> Чи повідомляють те саме надійні джерела?</li>
+  </ol>
+  <div class="callout">Не знаєш напевно — не поширюй. Від твого мовчання нікому не буде шкоди, а репост фейку може зашкодити.</div>
+
+  <h2>Що робити, якщо натрапив(-ла) на фейк</h2>
+  <ul>
+    <li>Не пересилай його й не переходь за посиланням.</li>
+    <li>Не вводь пароль, код із SMS чи дані картки.</li>
+    <li>Не пиши емоційних коментарів: вони лише підсилюють допис.</li>
+    <li>Розкажи вчителю чи дорослим і поскаржся на допис кнопкою «Поскаржитися».</li>
+    <li>Якщо це шахрайство, дорослі можуть повідомити кіберполіцію.</li>
+  </ul>
+
+  <h2>Що далі</h2>
+  <p>На наступному уроці ти навчишся перевіряти інформацію за допомогою інструментів: сервісів фактчекінгу (StopFake, VoxCheck) і пошуку за зображенням (Google Lens, TinEye). Сьогодні вчимося помічати ознаки.</p>
+  <p class="next"><a class="btn primary" href="#lab">Далі: детектор</a></p>
+</div></section>
+
+<!-- ===================== LAB ===================== -->
+<section class="view" id="v-lab">
+  <p class="stepno">Крок 2 з 4: детектор</p>
+  <div class="builder">
+    <aside class="panel tasks" id="ltasks" aria-label="Завдання"></aside>
+    <div class="stagecol" id="lwork"></div>
+  </div>
+  <p class="next"><a class="btn primary" href="#test">Далі: тест</a></p>
+</section>
+
+<!-- ===================== TEST ===================== -->
+<section class="view" id="v-test">
+  <div class="prose">
+    <p class="stepno">Крок 3 з 4: тест</p>
+    <h2>Тест: фейки та їх розпізнавання</h2>
+    <p class="lead">Дванадцять запитань, лише одна спроба.</p>
+  </div>
+  <div id="testbox"></div>
+</section>
+
+<!-- ===================== RESULT ===================== -->
+<section class="view" id="v-result">
+  <div class="report">
+    <div class="prose"><p class="stepno">Крок 4 з 4: результат</p><h2>Мій результат</h2><p class="lead">Коли все виконано, зроби знімок екрана цієї сторінки (з прізвищем і результатом тесту) й надішли вчителю.</p></div>
+    <div id="rep-summary"></div>
+    <div id="resnext" style="margin-top:14px"></div>
+    <h3>Моє правило</h3>
+    <div class="rulebox" style="max-width:640px">
+      <label for="rule" style="display:block;margin-bottom:6px">Одним-двома реченнями: що я зроблю, коли побачу тривожне або надто вигідне повідомлення?</label>
+      <textarea id="rule" rows="3" placeholder="Наприклад: спершу не пересилатиму, а перевірю, хто автор і чи пишуть про це інші джерела."></textarea>
+    </div>
+    <h3>Пам’ятка: п’ять запитань перед репостом</h3>
+    <div class="memo" id="memoPrint">
+      <h3>Перед тим як поділитися</h3>
+      <ol>
+        <li>Хто це написав?</li>
+        <li>Коли й де це сталося?</li>
+        <li>Які докази?</li>
+        <li>Що я відчуваю?</li>
+        <li>Хто ще про це пише?</li>
+      </ol>
+    </div>
+    <p style="margin-top:12px"><button class="btn small" id="printMemo" type="button">Друкувати пам’ятку</button></p>
+    <p style="margin-top:28px"><button class="btn" id="resetBtn" type="button">Почати практичну частину заново</button></p>
+    <p class="note">Ця кнопка не скидає тест: його можна пройти лише один раз.</p>
+  </div>
+</section>
+
+<!-- ===================== TEACHER (hidden) ===================== -->
+<section class="view" id="v-teacher">
+  <div class="prose"><h2>Для вчителя</h2><p class="lead">Ця сторінка не відображається в меню. Адреса: …/#teacher</p></div>
+  <div class="panel pad" id="teacherbox" style="max-width:640px"></div>
+</section>
+
+</div></main>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "fakes19-practice-v1", TKEY = "fakes19-test-v1";
+  var storageOK = (function () { try { var k = "__f19"; localStorage.setItem(k, "1"); localStorage.removeItem(k); return true; } catch (e) { return false; } })();
+  function loadState() { try { var s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  var saved = loadState() || {};
+  var st = { name: saved.name || "", done: saved.done || {}, ans: saved.ans || {}, inv: saved.inv || {}, task: saved.task || "t1", sb: saved.sb || { text: "", flags: [] }, rule: saved.rule || "" };
+  function persist() { if (!storageOK) return; try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { storageOK = false; warnStorage(); } }
+  function warnStorage() { var w = document.getElementById("storewarn"); if (w) w.classList.add("on"); }
+  if (!storageOK) warnStorage();
+  window.addEventListener("pagehide", persist);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) persist(); });
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, a, kids) {
+    var e = document.createElement(tag);
+    if (a) for (var k in a) {
+      var v = a[k];
+      if (k === "text") e.textContent = v;
+      else if (k === "html") e.innerHTML = v;
+      else if (k.indexOf("on") === 0) e.addEventListener(k.slice(2), v);
+      else if (k === "value" || k === "checked" || k === "disabled") e[k] = v;
+      else if (v !== false && v != null) e.setAttribute(k, v);
+    }
+    (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function nowIso() { return new Date().toISOString(); }
+  function fmtTime(iso) { return new Date(iso).toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+  $("who").value = st.name || "";
+  $("who").addEventListener("input", function () { st.name = $("who").value; persist(); });
+  $("rule").value = st.rule || "";
+  $("rule").addEventListener("input", function () { st.rule = $("rule").value; persist(); });
+
+  /* ======================= ROUTING ======================= */
+  var VIEWS = ["theory", "lab", "test", "result", "teacher"], hooks = {};
+  function route() {
+    var v = (location.hash || "").slice(1), has = VIEWS.indexOf(v) >= 0;
+    if (!has) v = "theory";
+    VIEWS.forEach(function (x) { $("v-" + x).classList.toggle("on", x === v); });
+    document.querySelectorAll("nav.tabs a").forEach(function (a) { if (a.dataset.view === v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    if (hooks[v]) hooks[v]();
+    if (has) window.scrollTo({ top: document.querySelector("nav.tabs").offsetTop - 1 });
+  }
+  window.addEventListener("hashchange", route);
+
+  /* ======================= DATA ======================= */
+  var FLAGS = [
+    { id: "src", label: "Немає джерела, автора чи дати" },
+    { id: "emo", label: "Тисне на емоції (страх, терміновість, «ШОК»)" },
+    { id: "share", label: "Вимагає негайно поширити" },
+    { id: "offer", label: "Надто вигідна пропозиція чи «чудо»" },
+    { id: "link", label: "Підозріле посилання чи адреса сайту" },
+    { id: "media", label: "Фото чи відео без підтвердження" },
+    { id: "data", label: "Просить пароль, код чи дані картки" },
+    { id: "head", label: "Заголовок не збігається з текстом" }
+  ];
+  function flagName(id) { return FLAGS.filter(function (f) { return f.id === id; })[0].label; }
+  var VERDICTS = [["fake", "Фейк або шахрайство"], ["check", "Потрібна перевірка"], ["true", "Схоже на правду"]];
+
+  var MSGS = {
+    m1: { kind: "chat", from: "Переслане повідомлення", meta: "Чат класу, 21:47", avatar: "↪",
+      text: "‼️ТЕРМІНОВО!!! Мені сказала знайома, яка працює в міськраді: з понеділка ВСІ школи міста закриють на місяць! Офіційно ще нічого не оголошували, але вже всі знають. Перешли всім у класі, хай батьки готуються!!!",
+      flags: ["src", "emo", "share"], opt: [], verdict: "fake",
+      why: "Джерело — «знайома, яка працює в міськраді»: ні імені, ні посади, ні документа. Є тиск на емоції (ТЕРМІНОВО, три знаки оклику) і заклик негайно переслати. А те, що «офіційно ще нічого не оголошували», саме підказує: офіційного підтвердження немає." },
+    m2: { kind: "sms", from: "Невідомий номер", meta: "SMS, 10:32", avatar: "?",
+      text: "Вітаємо! Ви виграли смартфон в акції «ТехноМаркет»! Щоб отримати приз, протягом 15 хвилин перейдіть за посиланням і введіть номер картки для оплати доставки:",
+      link: "tehnomarket-prize.example/get",
+      flags: ["offer", "link", "data", "emo"], opt: ["src"], verdict: "fake",
+      why: "Приз, у розіграші якого ти не брав(-ла) участі, посилання на сторінку, що лише вдає магазин, і прохання ввести номер картки — класична фішингова схема. Обмеження в 15 хвилин тисне на емоції, щоб ти не встиг(-ла) подумати." },
+    m3: { kind: "news", from: "ЗдоровʼяЩодня", meta: "новинний сайт", avatar: "З",
+      title: "ШОК! Ця звичайна їжа руйнує ваш мозок — лікарі мовчать!",
+      text: "Дієтологи радять харчуватися різноманітно й обмежувати цукор. Деякі дослідження пов’язують надмірне споживання солодкого зі зниженням уваги.",
+      note: "Автор: не вказано. Дата: не вказано.",
+      flags: ["head", "emo", "src"], opt: [], verdict: "check",
+      why: "Заголовок обіцяє «шок» і «руйнування мозку», а в тексті — звичайна порада про цукор. Це клікбейт. До того ж автор і дата не вказані. Такий матеріал не обов’язково вигаданий, але його треба перевіряти, а не поширювати." },
+    m4: { kind: "post", from: "Ліцей №7, офіційна сторінка", meta: "Опубліковано 9 листопада, 10:15", avatar: "Л",
+      text: "Шановні батьки та учні! У четвер, 19 листопада, о 18:00 в актовому залі відбудуться збори батьків 9-х класів. Тема: підсумки першого семестру. Питання можна надіслати класному керівникові до середи, 18 листопада. Інформація також розміщена на сайті ліцею в розділі «Оголошення».",
+      flags: [], opt: [], verdict: "true",
+      why: "Тут є автор (офіційна сторінка ліцею), дата публікації, час і місце події та спосіб перевірки: оголошення є на сайті. Немає тиску й заклику «перешли всім». Не все, що схоже на новини, — фейк: це приклад надійного повідомлення." },
+    m5: { kind: "post", from: "Олег К.", meta: "Сьогодні, 08:20", avatar: "О", img: "flood",
+      text: "Так сьогодні виглядає центр нашого міста після зливи.",
+      comments: ["Марина: Це ж фото з 2019 року, і не з нашого міста 🤔", "Іван: У нас сьогодні сухо, я щойно вийшов із дому."],
+      flags: ["media", "src"], opt: ["emo"], verdict: "check",
+      why: "Фото додано без підтвердження, де й коли його зроблено. Коментарі підказують, що воно старе й з іншого міста. Робити висновок «фейк» зарано: спершу перевірка, наприклад зворотним пошуком зображення (про це — наступний урок). Але ділитися таким дописом не можна." },
+    m6: { kind: "alert", from: "Служба безпеки соцмережі", meta: "Повідомлення в застосунку", avatar: "!",
+      text: "Ваш акаунт буде видалено через 24 години за порушення правил. Щоб скасувати видалення, надішліть нам код із SMS, яке щойно прийшло, або перейдіть за посиланням:",
+      link: "support-socmerezha-verify.example",
+      flags: ["emo", "link", "data"], opt: ["src"], verdict: "fake",
+      why: "Справжні сервіси не просять надсилати код із SMS: цей код — ключ до твого акаунта. Терміновість (24 години) і загроза видалення тиснуть на емоції, а посилання веде не на офіційний сайт." }
+  };
+  var CHECKS = [["author", "Хто автор?"], ["date", "Коли опубліковано?"], ["link", "Чи є посилання на джерело?"], ["others", "Що пишуть інші джерела?"], ["comments", "Що у коментарях?"]];
+  var CASES = {
+    c1: { from: "Магазин «ЕкоВіта»", meta: "Сьогодні, 12:05", avatar: "Е",
+      text: "Вчені довели: склянка «енергетичного чаю ЕкоВіта» щодня підвищує IQ на 20 пунктів! Встигніть замовити зі знижкою!",
+      facts: { author: "Допис опублікувала сторінка магазину «ЕкоВіта», який сам продає цей чай.", date: "Опубліковано сьогодні. Такий самий текст за годину з’явився ще на 40 сторінках.", link: "«Дослідження» за посиланням — це сторінка самого магазину. Назви університету чи наукового журналу немає.", others: "Жодна наукова установа чи медичне видання про таке не повідомляє.", comments: "Під дописом — промокоди на знижку та схожі «відгуки» від нових акаунтів." },
+      verdict: "fake", why: "Це рекламна маніпуляція. «Вчені довели» без назви дослідження, автор зацікавлений у продажу, а інших підтверджень немає." },
+    c2: { from: "Міська рада, офіційна сторінка", meta: "Сьогодні, 10:15", avatar: "М",
+      text: "У суботу, 14 листопада, з 9:00 до 14:00 буде перекрито вулицю Садову через міський забіг. Об’їзд: вулицями Лісовою й Шкільною. Автобус №12 курсуватиме за зміненим маршрутом.",
+      facts: { author: "Допис опублікувала офіційна сторінка міської ради; вона має позначку підтвердження.", date: "Опубліковано сьогодні о 10:15 і закріплено вгорі сторінки.", link: "У дописі є посилання на оголошення на офіційному сайті міськради; воно відкривається, текст збігається.", others: "Місцеві новинні сайти повідомляють те саме й посилаються на міськраду.", comments: "Люди питають про маршрут автобуса, адміністратор сторінки відповідає." },
+      verdict: "true", why: "Є відомий автор, дата, посилання на офіційне джерело й збіг з іншими надійними джерелами. Але правило однакове завжди: спершу перевірка, потім довіра." }
+  };
+  var TASKS = [
+    { id: "t1", type: "msgs", ids: ["m1", "m2", "m3"], title: "Підозрілі повідомлення",
+      text: "Прочитай три повідомлення. У кожному познач ознаки фейку, які ти бачиш, і вибери висновок. Потім натисни «Перевірити завдання».",
+      hint: "Дивись, хто автор, що від тебе вимагають і які слова та посилання використано. Ознак може бути кілька, висновок — один." },
+    { id: "t2", type: "msgs", ids: ["m4", "m5", "m6"], title: "Не все є фейком",
+      text: "Тут є й справжнє повідомлення. Познач ознаки (якщо їх немає — нічого не позначай) і вибери висновок.",
+      hint: "Пройдися по п’яти запитаннях із теорії. Якщо на всі запитання знайшлася відповідь, повідомлення може бути правдивим. Якщо чогось бракує, потрібна перевірка." },
+    { id: "t3", type: "cases", ids: ["c1", "c2"], bonus: true, title: "Розслідування",
+      text: "Додаткове завдання. Для кожного допису проведи перевірку: відкривай кнопки «Хто автор?», «Коли опубліковано?» та інші. Відкрий щонайменше три, серед них «Що пишуть інші джерела?», і лише тоді вибери висновок.",
+      hint: "Відкривай перевірки по черзі й читай, що з’явилося. Найважливіша з них — «Що пишуть інші джерела?»." },
+    { id: "t0", type: "sandbox", sandbox: true, title: "Пісочниця", text: "Вільне місце без перевірки: встав повідомлення, яке ти бачив(-ла) (або придумай своє), познач ознаки й подивись, наскільки воно підозріле." }
+  ];
+  function findTask(id) { return TASKS.filter(function (t) { return t.id === id; })[0] || TASKS[0]; }
+  var lastFb = {}, lastRes = {};
+
+  /* ======================= MESSAGE CARDS ======================= */
+  var FLOOD = '<svg viewBox="0 0 320 150" role="img" aria-label="Фото затопленої вулиці"><rect width="320" height="150" fill="#9db2c4"/><rect x="0" y="30" width="60" height="70" fill="#6b7d8c"/><rect x="66" y="10" width="70" height="90" fill="#7d8e9c"/><rect x="142" y="38" width="56" height="62" fill="#6b7d8c"/><rect x="204" y="18" width="116" height="82" fill="#7d8e9c"/><g fill="#d9e2ea"><rect x="12" y="44" width="10" height="10"/><rect x="34" y="44" width="10" height="10"/><rect x="78" y="26" width="10" height="10"/><rect x="104" y="26" width="10" height="10"/><rect x="78" y="52" width="10" height="10"/><rect x="104" y="52" width="10" height="10"/><rect x="216" y="34" width="10" height="10"/><rect x="246" y="34" width="10" height="10"/><rect x="276" y="34" width="10" height="10"/></g><rect y="98" width="320" height="52" fill="#5e8aa6"/><g stroke="#8db4cc" stroke-width="2" fill="none"><path d="M0 112 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0"/><path d="M0 130 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0"/></g><g><rect x="118" y="86" width="84" height="22" rx="8" fill="#a24a2a"/><rect x="134" y="74" width="50" height="18" rx="6" fill="#b95b38"/><circle cx="140" cy="108" r="8" fill="#2a2f38"/><circle cx="180" cy="108" r="8" fill="#2a2f38"/></g></svg>';
+  function msgCard(m) {
+    var card = el("div", { class: "msg " + m.kind });
+    card.appendChild(el("div", { class: "msg-top" }, [el("div", { class: "avatar", text: m.avatar || "•", "aria-hidden": "true" }), el("div", null, [el("div", { class: "msg-from", text: m.from }), el("div", { class: "msg-meta", text: m.meta })])]));
+    var body = el("div", { class: "msg-body" });
+    if (m.title) body.appendChild(el("p", { class: "msg-title", text: m.title }));
+    var tx = el("p", { class: "msg-text", text: m.text });
+    if (m.kind === "chat" || m.kind === "sms") body.appendChild(el("span", { class: "bubble" }, [tx])); else body.appendChild(tx);
+    if (m.link) body.appendChild(el("span", { class: "msg-link", text: m.link }));
+    if (m.note) body.appendChild(el("p", { class: "msg-note", text: m.note }));
+    if (m.img === "flood") body.appendChild(el("div", { class: "msg-img", html: FLOOD }));
+    card.appendChild(body);
+    if (m.comments) card.appendChild(el("div", { class: "msg-comments" }, m.comments.map(function (c) { return el("p", { text: c }); })));
+    return card;
+  }
+
+  /* ======================= LAB ======================= */
+  function ansOf(id) { return st.ans[id] || (st.ans[id] = { flags: [], verdict: "" }); }
+  function checkMsg(m, a) {
+    var lines = [], ok = true;
+    if (!a.verdict) { ok = false; lines.push("Вибери висновок."); }
+    else if (a.verdict !== m.verdict) { ok = false; lines.push("Висновок не збігається з тим, що видно в повідомленні. Перечитай і подумай, чи є підстави йому довіряти."); }
+    var extra = a.flags.filter(function (f) { return m.flags.indexOf(f) < 0 && m.opt.indexOf(f) < 0; });
+    var found = a.flags.filter(function (f) { return m.flags.indexOf(f) >= 0; }).length;
+    if (extra.length) { ok = false; lines.push("Цієї ознаки в повідомленні немає: " + extra.map(flagName).join("; ") + "."); }
+    if (found < m.flags.length) { ok = false; lines.push(m.flags.length ? "Знайдено ознак: " + found + " з " + m.flags.length + ". Пошукай ще." : "Ознак тут немає."); }
+    return { ok: ok, lines: lines };
+  }
+  function msgBlock(id) {
+    var m = MSGS[id], a = ansOf(id), res = lastRes[id];
+    var p = el("div", { class: "panel", id: "mb-" + id });
+    p.appendChild(msgCard(m));
+    var ctl = el("div", { class: "ctl" });
+    ctl.appendChild(el("p", { class: "lab", text: "Які ознаки фейку ти бачиш?" }));
+    var chips = el("div", { class: "chips" });
+    FLAGS.forEach(function (f) {
+      var b = el("button", { type: "button", class: "chip", "aria-pressed": String(a.flags.indexOf(f.id) >= 0), text: f.label, onclick: function () {
+        var i = a.flags.indexOf(f.id); if (i >= 0) a.flags.splice(i, 1); else a.flags.push(f.id);
+        b.setAttribute("aria-pressed", String(i < 0)); persist();
+      } });
+      chips.appendChild(b);
+    });
+    ctl.appendChild(chips);
+    ctl.appendChild(el("p", { class: "lab", text: "Твій висновок" }));
+    var v = el("div", { class: "verd", role: "group", "aria-label": "Висновок" });
+    VERDICTS.forEach(function (x) {
+      var b = el("button", { type: "button", "aria-pressed": String(a.verdict === x[0]), text: x[1], onclick: function () {
+        a.verdict = x[0]; persist(); [].forEach.call(v.children, function (c) { c.setAttribute("aria-pressed", "false"); }); b.setAttribute("aria-pressed", "true");
+      } });
+      v.appendChild(b);
+    });
+    ctl.appendChild(v);
+    if (res) {
+      var fb = el("div", { class: "mfb " + (res.ok ? "ok" : "bad"), role: "status" });
+      if (res.ok) { fb.appendChild(el("b", { text: "Правильно. " })); fb.appendChild(document.createTextNode(m.why)); }
+      else { fb.appendChild(el("b", { text: "Ще не все. " })); var ul = el("ul"); res.lines.forEach(function (l) { ul.appendChild(el("li", { text: l })); }); fb.appendChild(ul); }
+      ctl.appendChild(fb);
+    }
+    p.appendChild(ctl);
+    return p;
+  }
+  function caseState(id) { return st.inv[id] || (st.inv[id] = { opened: [], verdict: "" }); }
+  function checkCase(id) {
+    var c = CASES[id], s = caseState(id), lines = [], ok = true;
+    if (s.opened.length < 3 || s.opened.indexOf("others") < 0) { ok = false; lines.push("Перевірок відкрито: " + s.opened.length + (s.opened.indexOf("others") < 0 ? ". Серед них обов’язково має бути «Що пишуть інші джерела?»." : ". Відкрий щонайменше три.")); }
+    if (!s.verdict) { ok = false; lines.push("Вибери висновок."); }
+    else if (s.verdict !== c.verdict) { ok = false; lines.push("Висновок не збігається з фактами, які ти зібрав(-ла). Перечитай їх ще раз."); }
+    return { ok: ok, lines: lines };
+  }
+  function caseBlock(id) {
+    var c = CASES[id], s = caseState(id), res = lastRes[id];
+    var p = el("div", { class: "panel", id: "cb-" + id });
+    p.appendChild(msgCard({ kind: "post", from: c.from, meta: c.meta, avatar: c.avatar, text: c.text }));
+    var ctl = el("div", { class: "ctl" });
+    ctl.appendChild(el("p", { class: "lab", text: "Проведи перевірку: відкривай кнопки" }));
+    var chk = el("div", { class: "chk" });
+    CHECKS.forEach(function (x) {
+      chk.appendChild(el("button", { type: "button", "aria-pressed": String(s.opened.indexOf(x[0]) >= 0), text: x[1], onclick: function () {
+        if (s.opened.indexOf(x[0]) < 0) s.opened.push(x[0]); persist(); replace(p, caseBlock(id));
+      } }));
+    });
+    ctl.appendChild(chk);
+    if (s.opened.length) {
+      var ul = el("ul", { class: "facts" });
+      s.opened.forEach(function (k) { var lbl = CHECKS.filter(function (x) { return x[0] === k; })[0][1]; ul.appendChild(el("li", null, [el("b", { text: lbl }), document.createTextNode(c.facts[k])])); });
+      ctl.appendChild(ul);
+    }
+    ctl.appendChild(el("p", { class: "lab", text: "Твій висновок" }));
+    var v = el("div", { class: "verd", role: "group", "aria-label": "Висновок" });
+    VERDICTS.forEach(function (x) {
+      var b = el("button", { type: "button", "aria-pressed": String(s.verdict === x[0]), text: x[1], onclick: function () {
+        s.verdict = x[0]; persist(); [].forEach.call(v.children, function (cc) { cc.setAttribute("aria-pressed", "false"); }); b.setAttribute("aria-pressed", "true");
+      } });
+      v.appendChild(b);
+    });
+    ctl.appendChild(v);
+    if (res) {
+      var fb = el("div", { class: "mfb " + (res.ok ? "ok" : "bad"), role: "status" });
+      if (res.ok) { fb.appendChild(el("b", { text: "Правильно. " })); fb.appendChild(document.createTextNode(c.why)); }
+      else { fb.appendChild(el("b", { text: "Ще не все. " })); var l = el("ul"); res.lines.forEach(function (x) { l.appendChild(el("li", { text: x })); }); fb.appendChild(l); }
+      ctl.appendChild(fb);
+    }
+    p.appendChild(ctl);
+    return p;
+  }
+  function replace(oldNode, newNode) { oldNode.parentNode.replaceChild(newNode, oldNode); }
+
+  function riskText(n) {
+    if (n === 0) return "Ознак не позначено. Це ще не означає, що повідомлення правдиве: перевір джерело за п’ятьма запитаннями.";
+    if (n <= 2) return "Позначено ознак: " + n + ". Будь обережним(-ою): перевір автора й подивись, що пишуть інші джерела.";
+    return "Позначено ознак: " + n + ". Ризик високий: не поширюй, не переходь за посиланням і не вводь жодних даних.";
+  }
+  function sandboxBlock() {
+    var p = el("div", { class: "panel pad sbx" });
+    p.appendChild(el("h3", { text: "Твоє повідомлення" }));
+    var ta = el("textarea", { id: "sb-text", placeholder: "Встав або напиши текст повідомлення, яке викликало підозру" });
+    ta.value = st.sb.text || ""; ta.addEventListener("input", function () { st.sb.text = ta.value; persist(); });
+    p.appendChild(ta);
+    p.appendChild(el("p", { class: "lab", style: "margin:12px 0 6px;font-weight:600;color:var(--muted);font-size:13px", text: "Які ознаки ти бачиш?" }));
+    var chips = el("div", { class: "chips" }), risk = el("div", { class: "risk", role: "status" });
+    function upd() { risk.textContent = riskText(st.sb.flags.length); }
+    FLAGS.forEach(function (f) {
+      var b = el("button", { type: "button", class: "chip", "aria-pressed": String(st.sb.flags.indexOf(f.id) >= 0), text: f.label, onclick: function () {
+        var i = st.sb.flags.indexOf(f.id); if (i >= 0) st.sb.flags.splice(i, 1); else st.sb.flags.push(f.id);
+        b.setAttribute("aria-pressed", String(i < 0)); persist(); upd();
+      } });
+      chips.appendChild(b);
+    });
+    p.appendChild(chips); upd(); p.appendChild(risk);
+    return p;
+  }
+
+  function renderTasks() {
+    var box = $("ltasks"); box.innerHTML = "";
+    var nums = el("div", { class: "tnums" });
+    TASKS.forEach(function (t, i) {
+      var b = el("button", { type: "button", "aria-pressed": String(st.task === t.id), text: t.sandbox ? "Пісочниця" : String(i + 1),
+        "aria-label": t.sandbox ? "Пісочниця" : "Завдання " + (i + 1) + (st.done[t.id] ? ", виконано" : "") + (t.bonus ? ", додаткове" : ""),
+        onclick: function () { st.task = t.id; persist(); renderLab(); } });
+      if (st.done[t.id]) b.classList.add("done");
+      if (t.bonus) b.classList.add("bonus");
+      nums.appendChild(b);
+    });
+    box.appendChild(nums);
+    var t = findTask(st.task), idx = TASKS.indexOf(t), card = el("div", { class: "task" });
+    card.appendChild(el("h3", { text: t.sandbox ? t.title : "Завдання " + (idx + 1) + ". " + t.title }));
+    card.appendChild(el("p", { class: "meta", text: t.sandbox ? "Без перевірки" : t.bonus ? (st.done[t.id] ? "Додаткове завдання — виконано" : "Додаткове завдання") : (st.done[t.id] ? "Виконано" : "Ще не виконано") }));
+    if (!t.sandbox && st.done[t.id]) card.appendChild(el("div", { class: "stamp-row" }, [el("span", { class: "stamp-done", text: "Виконано" })]));
+    card.appendChild(el("p", { text: t.text }));
+    if (!t.sandbox) {
+      card.appendChild(el("details", { class: "hint" }, [el("summary", { text: "Підказка" }), el("p", { text: t.hint })]));
+      var fb = el("div", { class: "feedback", role: "status" }), lf = lastFb[t.id];
+      if (lf) { fb.className = "feedback " + (lf.ok ? "ok" : "bad"); fb.textContent = lf.msg; }
+      card.appendChild(el("button", { class: "btn primary", type: "button", text: "Перевірити завдання", onclick: function () { runCheck(t); } }));
+      card.appendChild(fb);
+      card.appendChild(el("button", { class: "btn small retry", type: "button", text: "Почати це завдання спочатку", onclick: function () { resetTask(t); } }));
+    }
+    box.appendChild(card);
+  }
+  function runCheck(t) {
+    var good = 0;
+    t.ids.forEach(function (id) {
+      var r = t.type === "msgs" ? checkMsg(MSGS[id], ansOf(id)) : checkCase(id);
+      lastRes[id] = r; if (r.ok) good++;
+    });
+    var all = good === t.ids.length;
+    if (all) { st.done[t.id] = st.done[t.id] || nowIso(); persist(); lastFb[t.id] = { ok: true, msg: "Правильно! Усі " + (t.type === "msgs" ? "повідомлення" : "дописи") + " розібрано." }; }
+    else lastFb[t.id] = { ok: false, msg: "Правильно розібрано: " + good + " з " + t.ids.length + ". Виправ решту — під кожним повідомленням є підказка — і перевір ще раз." };
+    renderLab();
+  }
+  function resetTask(t) {
+    t.ids.forEach(function (id) { delete st.ans[id]; delete st.inv[id]; delete lastRes[id]; });
+    delete lastFb[t.id]; persist(); renderLab();
+  }
+  function renderWork() {
+    var box = $("lwork"); box.innerHTML = ""; var t = findTask(st.task);
+    if (t.type === "msgs") t.ids.forEach(function (id) { box.appendChild(msgBlock(id)); });
+    else if (t.type === "cases") t.ids.forEach(function (id) { box.appendChild(caseBlock(id)); });
+    else box.appendChild(sandboxBlock());
+  }
+  function renderLab() { renderTasks(); renderWork(); }
+  hooks.lab = renderLab;
+
+  /* ======================= TEST (one attempt) ======================= */
+  var TOPICS = ["Що таке фейк і які вони бувають", "Ознаки фейків", "Як діяти"];
+  /* the first option of every question is the correct one; the order is shuffled for each student */
+  var TEST = [
+    { t: 0, q: "Що таке фейк?", o: ["Неправдива або викривлена інформація, яку видають за правдиву", "Будь-яка новина, яка тобі не сподобалась", "Повідомлення, надіслане невідомою людиною", "Жартівливий допис у соціальній мережі"] },
+    { t: 0, q: "Чим дезінформація відрізняється від хибної інформації?", o: ["Дезінформацію поширюють навмисно, щоб ввести в оману, а хибну — помилково, без такого наміру", "Дезінформація завжди стосується політики, а хибна інформація — ні", "Дезінформацію можна знайти лише в інтернеті, а хибну — лише в газетах", "Вони означають одне й те саме"] },
+    { t: 1, q: "Яке з повідомлень найбільше схоже на фейк?", o: ["«Мені сказала знайома з міськради, що школи закриють! Перешли всім негайно!»", "«Збори батьків відбудуться 19 листопада о 18:00, оголошення є на сайті ліцею»", "«Розклад автобуса №12 змінено на час забігу, деталі на сайті міськради»", "«Лікарка пояснює, як правильно мити руки; допис із її підтвердженої сторінки»"] },
+    { t: 0, q: "Повідомлення «Ви виграли смартфон! Введіть номер картки та код із SMS» найімовірніше є…", o: ["фішингом — шахрайством для викрадення даних і грошей", "офіційним оголошенням магазину", "клікбейтом, який лише збирає перегляди", "сатирою на рекламу"] },
+    { t: 0, q: "Що таке діпфейк?", o: ["Відео, аудіо чи фото, створені або змінені за допомогою ШІ так, що людина «говорить» чи «робить» те, чого не було", "Фото, яке просто обрізали або покращили фільтром", "Копія сайту, що відкривається повільніше", "Повідомлення з помилками в тексті"] },
+    { t: 1, q: "Чому фейки часто розраховані на сильні емоції?", o: ["Бо під впливом страху чи обурення люди швидше діляться й рідше перевіряють", "Бо емоційні повідомлення, як правило, достовірніші", "Бо емоційні тексти легше надрукувати", "Бо соціальні мережі видаляють спокійні тексти"] },
+    { t: 2, q: "Тобі прислали лякаюче повідомлення без джерела. Що правильно зробити першим?", o: ["Не пересилати, перевірити за п’ятьма запитаннями й за потреби спитати дорослих чи вчителя", "Переслати друзям, щоб вони теж були обережні", "Написати в коментарях, що це жах, щоб привернути увагу", "Перейти за посиланням у повідомленні й подивитися, що там"] },
+    { t: 0, q: "Справжнє фото повені 2019 року поширюють із підписом «сьогодні в нашому місті». Який це вид фейку?", o: ["Зображення поза контекстом", "Діпфейк", "Фішинг", "Сатира"] },
+    { t: 1, q: "Що з наведеного НЕ є ознакою фейку?", o: ["Є автор, дата, місце й посилання на офіційний сайт", "Заклик «перешли всім негайно»", "Прохання надіслати код із SMS", "Заголовок із «ШОК!», який не відповідає тексту"] },
+    { t: 0, q: "Заголовок «ШОК! Лікарі мовчать!», а в тексті — звичайна порада про сон. Це…", o: ["клікбейт", "діпфейк", "ланцюгове повідомлення", "фішинг"] },
+    { t: 2, q: "Ти переслав(-ла) друзям допис, який виявився вигаданим, і не знав(-ла) цього. Що це означає?", o: ["Ти допоміг(-ла) поширити неправду: перевіряти треба до репосту, а помилку варто виправити й попередити друзів", "Нічого, адже ти не хотів(-ла) шкодити", "Відповідальність лише на авторі допису", "Нічого, якщо допис мав багато лайків"] },
+    { t: 2, q: "Для чого фахівцеві з кіберзахисту вміти розпізнавати фейки?", o: ["Бо через фейкові повідомлення шахраї викрадають дані й гроші, і їх потрібно зупиняти раніше", "Щоб самому створювати переконливіші фейки", "Бо фейки з’являються лише на сайтах уряду", "Це потрібно лише журналістам, а не фахівцям із безпеки"] }
+  ];
+  function range(n) { var r = []; for (var i = 0; i < n; i++) r.push(i); return r; }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  function loadTest() { try { var s = localStorage.getItem(TKEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  var tst = storageOK ? loadTest() : null;
+  function saveTest() { if (!storageOK) return false; try { localStorage.setItem(TKEY, JSON.stringify(tst)); return true; } catch (e) { return false; } }
+  function testFinished() { return !!tst && tst.picks.length >= TEST.length; }
+  function testScore() { var s = 0; tst.picks.forEach(function (p) { if (p === 0) s++; }); return s; }
+  function topicStats() {
+    var out = TOPICS.map(function () { return { ok: 0, n: 0 }; });
+    tst.order.forEach(function (qi, pos) { if (tst.picks[pos] === undefined) return; var q = TEST[qi]; out[q.t].n++; if (tst.picks[pos] === 0) out[q.t].ok++; });
+    return out;
+  }
+  function verdictText(sc) {
+    if (sc >= 10) return "Відмінний результат.";
+    if (sc >= 7) return "Добрий результат.";
+    if (sc >= 4) return "Є прогалини: перечитай теорію.";
+    return "Потрібно повторити матеріал.";
+  }
+  var selOpt = -1, startArmed = false;
+  function panel(kids, cls) { return el("div", { class: "panel pad " + (cls || "") }, kids); }
+  function renderTest() {
+    var box = $("testbox"); box.innerHTML = "";
+    if (!storageOK) {
+      box.appendChild(panel([el("h3", { text: "Тест недоступний у цьому вікні" }), el("p", { text: "Браузер не зберігає дані (можливо, увімкнено приватний режим), тому система не може запам’ятати, що ти вже відповідав(-ла). Відкрий сторінку у звичайному вікні браузера." })], "testwarn"));
+      return;
+    }
+    if (!tst) { renderTestIntro(box); return; }
+    if (testFinished()) { renderTestDone(box); return; }
+    renderTestQuestion(box);
+  }
+  function renderTestIntro(box) {
+    var p = panel([]);
+    p.appendChild(el("h3", { text: "Перед початком" }));
+    var ul = el("ul", { class: "rules" });
+    ["У тесті " + TEST.length + " запитань, на кожне — чотири варіанти відповіді, правильний один.",
+     "Тест можна пройти лише один раз. На кожне запитання відповідаєш один раз: після кнопки «Відповісти» змінити відповідь не можна.",
+     "Закрив(-ла) або оновив(-ла) сторінку? Нічого страшного: тест продовжиться з того самого запитання.",
+     "Наприкінці побачиш результат і підсумок за темами. Правильні відповіді не показуються.",
+     "Тест триває 7–10 хвилин. Почни, коли будеш готовий(-а)."].forEach(function (t) { ul.appendChild(el("li", { text: t })); });
+    p.appendChild(ul);
+    var fb = el("div", { class: "feedback", role: "status" });
+    var btn = el("button", { class: "btn primary", type: "button", text: "Почати тест (одна спроба)", onclick: function () {
+      if (!(st.name || "").trim()) { fb.className = "feedback bad"; fb.textContent = "Спочатку впиши прізвище та ім’я у верхній частині сторінки: вони потрібні для знімка екрана з результатом."; $("who").focus(); return; }
+      if (!startArmed) {
+        startArmed = true; fb.className = "feedback"; btn.textContent = "Точно почати? Другої спроби не буде";
+        setTimeout(function () { startArmed = false; btn.textContent = "Почати тест (одна спроба)"; }, 6000); return;
+      }
+      var order = shuffle(range(TEST.length));
+      tst = { name: st.name.trim(), started: nowIso(), order: order, perm: order.map(function () { return shuffle([0, 1, 2, 3]); }), picks: [], finished: null };
+      if (!saveTest()) { tst = null; fb.className = "feedback bad"; fb.textContent = "Не вдалося запам’ятати початок тесту. Відкрий сторінку у звичайному вікні браузера."; return; }
+      selOpt = -1; startArmed = false; renderTest();
+    } });
+    p.appendChild(btn); p.appendChild(fb); box.appendChild(p);
+  }
+  function renderTestQuestion(box) {
+    var pos = tst.picks.length, q = TEST[tst.order[pos]], perm = tst.perm[pos], n = TEST.length;
+    var p = panel([]);
+    p.appendChild(el("p", { class: "tprog", text: "Запитання " + (pos + 1) + " з " + n }));
+    p.appendChild(el("div", { class: "progress", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": String(n), "aria-valuenow": String(pos) }, [el("i", { style: "width:" + Math.round(pos / n * 100) + "%" })]));
+    p.appendChild(el("p", { class: "tq", text: q.q }));
+    var opts = el("div", { class: "topts", role: "group", "aria-label": "Варіанти відповіді" });
+    perm.forEach(function (oi) { opts.appendChild(el("button", { type: "button", "aria-pressed": String(selOpt === oi), text: q.o[oi], onclick: function () { selOpt = oi; renderTest(); } })); });
+    p.appendChild(opts);
+    var fb = el("div", { class: "feedback", role: "status" });
+    var go = el("button", { class: "btn primary", type: "button", text: pos === n - 1 ? "Відповісти й завершити тест" : "Відповісти", disabled: selOpt < 0, onclick: function () {
+      if (selOpt < 0) return;
+      tst.picks.push(selOpt);
+      if (tst.picks.length >= n) tst.finished = nowIso();
+      if (!saveTest()) { tst.picks.pop(); tst.finished = null; fb.className = "feedback bad"; fb.textContent = "Не вдалося зберегти відповідь. Спробуй ще раз."; return; }
+      selOpt = -1; renderTest(); window.scrollTo({ top: document.querySelector("nav.tabs").offsetTop - 1 });
+    } });
+    p.appendChild(el("div", { class: "tact" }, [go, el("span", { class: "note", text: "Після натискання змінити відповідь не можна." })]));
+    p.appendChild(fb); box.appendChild(p);
+  }
+  function minutes(a, b) { return Math.max(1, Math.round((new Date(b) - new Date(a)) / 60000)) + " хв"; }
+  function renderTestDone(box) {
+    var sc = testScore(), n = TEST.length, p = panel([], "tdone");
+    p.appendChild(el("h3", { text: "Тест завершено" }));
+    p.appendChild(el("p", { class: "big", text: sc + " з " + n }));
+    p.appendChild(el("p", { text: verdictText(sc) + " Час проходження: " + minutes(tst.started, tst.finished) + "." }));
+    var stt = topicStats();
+    TOPICS.forEach(function (name, i) { p.appendChild(el("div", { class: "row" }, [el("span", { text: name }), el("b", { text: stt[i].ok + " з " + stt[i].n })])); });
+    p.appendChild(el("p", { class: "note", text: "Другої спроби немає. Тема з найнижчим результатом — те, що варто повторити." }));
+    p.appendChild(el("p", null, [el("a", { class: "btn primary", href: "#result", text: "Перейти до результату" })]));
+    box.appendChild(p);
+  }
+  hooks.test = renderTest;
+
+  /* ======================= RESULT ======================= */
+  function renderSummary() {
+    var box = $("rep-summary"); box.innerHTML = "";
+    var rows = [], core = [];
+    TASKS.filter(function (t) { return !t.sandbox; }).forEach(function (t, i) {
+      rows.push({ g: "Детектор", text: (i + 1) + ". " + t.title + (t.bonus ? " (додаткове)" : ""), val: st.done[t.id] ? "✓ " + fmtTime(st.done[t.id]) : "—", ok: !!st.done[t.id] });
+      if (!t.bonus) core.push(!!st.done[t.id]);
+    });
+    var tf = testFinished();
+    rows.push({ g: "Тест", text: "Одна спроба", val: tf ? testScore() + " з " + TEST.length + " (" + fmtTime(tst.finished) + ")" : "ще не пройдено", ok: tf }); core.push(tf);
+    var n = core.filter(Boolean).length;
+    box.appendChild(el("p", { text: "Учень / учениця: " + (st.name || "— впиши прізвище та ім’я на початку сторінки —") }));
+    box.appendChild(el("p", { class: "big", text: "Виконано " + n + " з " + core.length + " основних кроків" }));
+    var cur = "";
+    rows.forEach(function (x) {
+      if (x.g !== cur) { cur = x.g; box.appendChild(el("p", { style: "margin:16px 0 0;font-weight:700", text: cur })); }
+      box.appendChild(el("div", { class: "row" }, [el("span", { text: x.text }), el("span", { class: "st" + (x.ok ? " ok" : ""), text: x.val })]));
+    });
+    if (tf) {
+      box.appendChild(el("p", { style: "margin:16px 0 0;font-weight:700", text: "Тест за темами" }));
+      var stt = topicStats();
+      TOPICS.forEach(function (name, i) { box.appendChild(el("div", { class: "row" }, [el("span", { text: name }), el("span", { class: "st", text: stt[i].ok + " з " + stt[i].n })])); });
+    }
+    var next = $("resnext"); next.innerHTML = "";
+    var left = [];
+    if (!st.done.t1) left.push(["lab", "Виконай завдання 1 у «Детекторі»"]);
+    if (!st.done.t2) left.push(["lab", "Виконай завдання 2 у «Детекторі»"]);
+    if (!tf) left.push(["test", "Пройди тест"]);
+    if (left.length) {
+      next.appendChild(el("p", { class: "lead", text: "Що ще лишилося:" }));
+      var ul = el("ul", { class: "weak" });
+      left.forEach(function (x) { ul.appendChild(el("li", null, [el("a", { href: "#" + x[0], text: x[1] })])); });
+      next.appendChild(ul);
+    } else next.appendChild(el("p", { class: "feedback ok", text: "Усе виконано. Зроби знімок екрана цієї сторінки й надішли вчителю." }));
+  }
+  hooks.result = renderSummary;
+  $("printMemo").addEventListener("click", function () { try { window.print(); } catch (e) {} });
+  var resetBtn = $("resetBtn"), armed = false;
+  resetBtn.addEventListener("click", function () {
+    if (!armed) { armed = true; resetBtn.textContent = "Точно? Натисни ще раз — практична частина буде очищена (тест не змінюється)"; setTimeout(function () { armed = false; resetBtn.textContent = "Почати практичну частину заново"; }, 5000); return; }
+    var name = st.name;
+    st = { name: name, done: {}, ans: {}, inv: {}, task: "t1", sb: { text: "", flags: [] }, rule: "" };
+    persist(); location.hash = "theory"; location.reload();
+  });
+
+  /* ======================= TEACHER (#teacher) ======================= */
+  function renderTeacher() {
+    var box = $("teacherbox"); box.innerHTML = "";
+    var info = !storageOK ? "Браузер не зберігає дані." : !tst ? "У цьому браузері тест ще не розпочато." :
+      "Ім’я: " + tst.name + ". Розпочато: " + fmtTime(tst.started) + ". Відповідей: " + tst.picks.length + " з " + TEST.length + (testFinished() ? ". Результат: " + testScore() + " з " + TEST.length + "." : ".");
+    box.appendChild(el("p", { text: info }));
+    var b = el("button", { class: "btn", type: "button", text: "Скинути тест у цьому браузері", disabled: !tst, onclick: function () {
+      if (!b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Точно? Натисни ще раз — учень зможе пройти тест заново"; return; }
+      try { localStorage.removeItem(TKEY); } catch (e) {}
+      location.hash = "theory"; location.reload();
+    } });
+    box.appendChild(b);
+  }
+  hooks.teacher = renderTeacher;
+
+  renderLab();
+  route();
+})();
+</script>
+</body>
+</html>
